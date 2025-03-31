@@ -1,103 +1,194 @@
-import Image from "next/image";
+'use client';
+
+import { Text, Flex, Container } from '@radix-ui/themes';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+
+import { DJ, djs } from '@/constant/djs';
+import { getRandomDJs } from '@/utils/utils';
+import HeroSection from '@/components/HeroSection';
+import LoadingScreen from '@/components/LoadingScreen';
+import DJBattleSection from '@/components/DJBattleSection';
+import DangerousSection from '@/components/DangerousSection';
+import UnknownDjsSection from '@/components/UnknownDjsSection';
+import UnknownDJListItem from '@/components/UnknownDJListItem';
+import PersonalDJRankingSection from '@/components/PersonalDJRankingSection';
+import PersonalDJRankingListItem from '@/components/PersonalDJRankingListItem';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [allDJs, setAllDJs] = useState<DJ[]>([]);
+  const [currentDJs, setCurrentDJs] = useState<[DJ, DJ] | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  useEffect(() => {
+    if (djs.length === 0) return;
+
+    setAllDJs(djs);
+    setCurrentDJs(getRandomDJs(djs, []));
+  }, [djs]);
+
+  const handleChoice = useCallback(
+    (winner: DJ, loser: DJ, winnerIndex: number) => {
+      // Replace Map.get with find
+      const winnerDj = allDJs.find((dj) => dj.id === winner.id);
+      const loserDj = allDJs.find((dj) => dj.id === loser.id);
+
+      if (!winnerDj || !loserDj) return;
+
+      // Update the winner's weight
+      const winnerUpdated = { ...winnerDj, weight: (winnerDj.weight || 0) + 1 };
+      setAllDJs((prev) =>
+        prev.map((dj) => (dj.id === winner.id ? winnerUpdated : dj))
+      );
+
+      try {
+        // Get a new challenger, excluding the current winner and loser
+        const [newChallenger] = getRandomDJs(allDJs, [winner, loser]);
+
+        // Keep the winner and add the new challenger in current DJs
+        setCurrentDJs(
+          winnerIndex === 0
+            ? [winnerUpdated, newChallenger]
+            : [newChallenger, winnerUpdated]
+        );
+      } catch (error) {
+        console.error('Not enough known DJs available');
+      }
+    },
+    [allDJs]
+  );
+
+  const handleKnownStatus = useCallback(
+    (dj: DJ, isKnown: boolean, index: number) => {
+      // Update the DJ's unknown status in allDJs
+      setAllDJs((prev) =>
+        prev.map((d) => (d.id === dj.id ? { ...d, unknown: !isKnown } : d))
+      );
+
+      if (!isKnown && currentDJs) {
+        // Get a new challenger for the current DJ's index
+        const [newChallenger] = getRandomDJs(allDJs, [dj]);
+
+        // Keep the current DJ and add the new challenger in current DJs
+        setCurrentDJs(
+          index === 0
+            ? [newChallenger, currentDJs[1]]
+            : [currentDJs[0], newChallenger]
+        );
+      }
+    },
+    [allDJs, currentDJs]
+  );
+
+  useEffect(() => {
+    if (!currentDJs) return;
+
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') {
+        handleChoice(currentDJs[0], currentDJs[1], 0);
+      } else if (event.key === 'ArrowRight') {
+        handleChoice(currentDJs[1], currentDJs[0], 1);
+      } else if (event.key === 'ArrowUp') {
+        handleKnownStatus(currentDJs[0], false, 0);
+      } else if (event.key === 'ArrowDown') {
+        handleKnownStatus(currentDJs[1], false, 1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentDJs, handleChoice, handleKnownStatus]);
+
+  const handleResetDJ = useCallback((djId: string) => {
+    setAllDJs((prev) =>
+      prev.map((dj) => (dj.id === djId ? { ...dj, weight: 0 } : dj))
+    );
+  }, []);
+
+  const sortedRankedDJs = useMemo(() => {
+    return Array.from(allDJs.values())
+      .filter((dj) => dj.unknown !== true && dj.weight)
+      .sort((a, b) => b.weight - a.weight);
+  }, [allDJs]);
+
+  const unknownDJs = useMemo(() => {
+    return Array.from(allDJs.values()).filter((dj) => dj.unknown === true);
+  }, [allDJs]);
+
+  if (!djs || !currentDJs) return <LoadingScreen />;
+
+  return (
+    <Container
+      size="4"
+      style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}
+    >
+      <Flex direction="column" gap="8">
+        {/* Heading + Instructions Section */}
+        <HeroSection />
+
+        {/* DJ Battle Section */}
+        {currentDJs && (
+          <DJBattleSection
+            leftDJ={{
+              dj: currentDJs[0],
+              currentPosition: 'left',
+              currentRank:
+                sortedRankedDJs.findIndex((d) => d.id === currentDJs[0].id) + 1,
+            }}
+            rightDJ={{
+              dj: currentDJs[1],
+              currentPosition: 'right',
+              currentRank:
+                sortedRankedDJs.findIndex((d) => d.id === currentDJs[1].id) + 1,
+            }}
+            onLeftKeyPress={() => handleChoice(currentDJs[0], currentDJs[1], 0)}
+            onRightKeyPress={() =>
+              handleChoice(currentDJs[1], currentDJs[0], 1)
+            }
+            onUpKeyPress={() => handleKnownStatus(currentDJs[0], false, 0)}
+            onDownKeyPress={() => handleKnownStatus(currentDJs[1], false, 1)}
+          />
+        )}
+
+        {/* Personal Rankings Section */}
+        <PersonalDJRankingSection>
+          {sortedRankedDJs.length === 0 ? (
+            <Text size="3" color="gray">
+              Rank some DJs first and see your personal ranking here!
+            </Text>
+          ) : (
+            <>
+              {sortedRankedDJs.map((dj, index) => (
+                <PersonalDJRankingListItem
+                  key={index}
+                  dj={dj}
+                  onDJReset={handleResetDJ}
+                  index={index}
+                />
+              ))}
+            </>
+          )}
+        </PersonalDJRankingSection>
+
+        {/* Unknown DJs Section */}
+        <UnknownDjsSection length={unknownDJs.length}>
+          {unknownDJs.map((dj, index) => (
+            <UnknownDJListItem
+              key={dj.id}
+              dj={dj}
+              onRevertStatus={() => handleKnownStatus(dj, true, -1)}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+          ))}
+        </UnknownDjsSection>
+
+        {/* Dangerous Section */}
+        {sortedRankedDJs.length >= 3 && (
+          <DangerousSection
+            onReset={() => {
+              setAllDJs(djs);
+              setCurrentDJs(getRandomDJs(allDJs, []));
+            }}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        )}
+      </Flex>
+    </Container>
   );
 }
