@@ -3,6 +3,7 @@ import { Theme } from '@radix-ui/themes';
 
 import './globals.css';
 import Header from '@/components/Header';
+import { ToastContainer } from '@/components/Toast/Toast';
 
 export const metadata: Metadata = {
   title: 'DJ Top Ranking',
@@ -32,7 +33,7 @@ export default function RootLayout({
           hasBackground={true}
         >
           <Header />
-          {children}
+          <ToastContainer>{children}</ToastContainer>
         </Theme>
       </body>
     </html>

@@ -1,10 +1,12 @@
 'use client';
 
-import { Text, Flex, Container, Button } from '@radix-ui/themes';
+import { v4 as uuidv4 } from 'uuid';
+import { Flex, Container, Button } from '@radix-ui/themes';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { DJ } from '@/database/entities';
 import { getRandomDJs } from '@/utils/utils';
+import { useToast } from '@/components/Toast/Toast';
 import { supabase } from '@/utils/supabase/client';
 import HeroSection from '@/components/HeroSection';
 import { UserDJRatingDto } from '@/interfaces/dtos';
@@ -27,6 +29,9 @@ export default function Page() {
   const [currentDJs, setCurrentDJs] = useState<
     [UserDJRatingDto, UserDJRatingDto] | null
   >(null);
+  const [unsavedData, setUnsavedData] = useState<boolean>(false);
+  // Get toast function from context
+  const { showToast } = useToast();
 
   // Calculate Elo rating change
   const calculateEloChange = (
@@ -66,6 +71,7 @@ export default function Page() {
         const userDJRatingsMap = new Map<string, UserDJRatingDto>();
         userDJRatings.forEach((userDjRating) => {
           userDJRatingsMap.set(userDjRating.dj_id, {
+            id: userDjRating.id,
             dj: userDjRating.dj,
             elo_rating: userDjRating.elo_rating,
             battles_count: userDjRating.battles_count,
@@ -81,6 +87,7 @@ export default function Page() {
           if (rating) return rating;
 
           return {
+            id: uuidv4(),
             dj,
             elo_rating: BASE_ELO,
             battles_count: 0,
@@ -112,12 +119,12 @@ export default function Page() {
 
       // Filter out DJs with battles
       const djsToSave = allDJs.filter(
-        (dj) => dj.battles_count > 0 || dj.unknown === true
+        (dj) => dj.battles_count > 0 || dj.unknown !== null
       );
 
       // Prepare upsert data
       const upsertData = djsToSave.map((dj) => ({
-        id: `${USER_ID}_${dj.dj.id}`, // Generate a consistent ID for upsert
+        id: dj.id,
         user_id: USER_ID,
         dj_id: dj.dj.id,
         elo_rating: dj.elo_rating,
@@ -132,10 +139,25 @@ export default function Page() {
 
       if (error) throw error;
 
-      alert('DJ rankings saved successfully!');
+      setUnsavedData(false);
+
+      // Show success toast instead of alert
+      showToast({
+        type: 'success',
+        title: 'DJ rankings saved successfully!',
+        description: 'Your DJ rankings have been saved.',
+        duration: 3000000,
+      });
     } catch (error) {
       console.error('Error saving rankings:', error);
-      alert('Failed to save rankings. Please try again.');
+
+      // Show error toast instead of alert
+      showToast({
+        type: 'error',
+        title: 'Failed to save rankings',
+        description: 'Please try again.',
+        duration: 5000000,
+      });
     } finally {
       setIsSaving(false);
     }
@@ -148,6 +170,8 @@ export default function Page() {
       const loserDj = allDJs.find((dj) => dj.dj.id === loser.dj.id);
 
       if (!winnerDj || !loserDj) return;
+
+      setUnsavedData(true);
 
       // Calculate Elo rating change
       const winnerRating = winnerDj.elo_rating;
@@ -202,6 +226,8 @@ export default function Page() {
         )
       );
 
+      setUnsavedData(true);
+
       if (!isKnown && currentDJs) {
         // Get a new challenger for the current DJ's index
         const [newChallenger] = getRandomDJs(allDJs, [dj]);
@@ -237,10 +263,11 @@ export default function Page() {
   }, [currentDJs, handleChoice, handleKnownStatus]);
 
   const handleResetDJ = useCallback((djId: string) => {
+    setUnsavedData(true);
     setAllDJs((prev) =>
       prev.map((dj) =>
         dj.dj.id === djId
-          ? { ...dj, elo_rating: BASE_ELO, battles_count: 0, unknown: null }
+          ? { ...dj, elo_rating: BASE_ELO, battles_count: 0, unknown: false }
           : dj
       )
     );
@@ -265,7 +292,7 @@ export default function Page() {
       size="4"
       style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}
     >
-      <Flex direction="column" gap="8">
+      <Flex direction="column" gap="9">
         {/* Heading + Instructions Section */}
         <HeroSection />
 
@@ -298,32 +325,31 @@ export default function Page() {
         )}
 
         {/* Personal Rankings Section */}
-        <PersonalDJRankingSection>
-          <Flex justify="between" align="center" mb="4">
-            <Text size="3">
-              {sortedRankedDJs.length === 0
-                ? 'Rank some DJs first and see your personal ranking here!'
-                : `You have ranked ${sortedRankedDJs.length} DJs`}
-            </Text>
-            {sortedRankedDJs.length > 0 && (
-              <Button color="blue" onClick={saveRankings} disabled={isSaving}>
+        <PersonalDJRankingSection
+          hasRankings={sortedRankedDJs.length > 0}
+          notifyUnsavedData={unsavedData}
+          saveButton={
+            sortedRankedDJs.length > 0 && (
+              <Button
+                size="3"
+                color="green"
+                variant="surface"
+                onClick={saveRankings}
+                disabled={isSaving}
+              >
                 {isSaving ? 'Saving...' : 'Save my personal DJ ranking'}
               </Button>
-            )}
-          </Flex>
-
-          {sortedRankedDJs.length > 0 && (
-            <Flex direction="column" gap="2">
-              {sortedRankedDJs.map((dj, index) => (
-                <PersonalDJRankingListItem
-                  key={index}
-                  dj={dj}
-                  onDJReset={handleResetDJ}
-                  index={index}
-                />
-              ))}
-            </Flex>
-          )}
+            )
+          }
+        >
+          {sortedRankedDJs.map((dj, index) => (
+            <PersonalDJRankingListItem
+              key={index}
+              dj={dj}
+              onDJReset={handleResetDJ}
+              index={index}
+            />
+          ))}
         </PersonalDJRankingSection>
 
         {/* Unknown DJs Section */}
@@ -336,6 +362,8 @@ export default function Page() {
             />
           ))}
         </UnknownDjsSection>
+
+        <div style={{ height: '1px', backgroundColor: 'var(--accent-2)' }} />
 
         {/* Dangerous Section */}
         {sortedRankedDJs.length >= 3 && (

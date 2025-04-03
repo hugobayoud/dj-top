@@ -86,12 +86,7 @@ const DJBattleCard = ({
           {oponent.dj.dj.name}
         </Text>
 
-        <Button
-          size="3"
-          variant="solid"
-          onClick={onChoicePress}
-          style={{ width: '200px' }}
-        >
+        <Button size="3" variant="solid" onClick={onChoicePress}>
           {oponent.currentPosition === 'left' && (
             <KeyboardKey direction="left" />
           )}

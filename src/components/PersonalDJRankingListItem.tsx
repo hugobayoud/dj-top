@@ -1,8 +1,7 @@
 import { ResetIcon } from '@radix-ui/react-icons';
 import { useState, useEffect, useRef } from 'react';
-import { Flex, Text, Button } from '@radix-ui/themes';
+import { Table, Text, Button } from '@radix-ui/themes';
 
-import { getBackgroundColor } from '@/utils/utils';
 import { UserDJRatingDto } from '@/interfaces/dtos';
 
 interface PersonalDJRankingListItemProps {
@@ -42,46 +41,22 @@ const PersonalDJRankingListItem = ({
     setConfirmingReset(false);
   };
 
+  const rank = index + 1;
+  const isTopRank = rank === 1;
+
   return (
-    <Flex
+    <Table.Row
       key={dj.dj.id}
-      align="center"
-      gap="3"
-      style={{
-        padding: '0.5rem',
-        backgroundColor: getBackgroundColor(index),
-        borderRadius: '4px',
-      }}
+      style={isTopRank ? { fontWeight: 'bold' } : undefined}
     >
-      <Flex style={{ flex: 1 }} gap="4">
-        <Text size="4" weight={index === 0 ? 'bold' : 'regular'}>
-          {`#${index + 1}`}
-        </Text>
-        <Text size="4" weight={index === 0 ? 'bold' : 'regular'}>
-          {dj.dj.name}
-        </Text>
-      </Flex>
-      <Flex
-        gap="2"
-        align="center"
-        direction="column"
-        style={{ alignItems: 'flex-end' }}
-      >
-        <Flex gap="2" align="center">
-          {dj.elo_rating && (
-            <Text size="3" color="gray">
-              ELO: {dj.elo_rating}
-            </Text>
-          )}
-          {dj.battles_count && (
-            <Text size="2" color="gray">
-              ({dj.battles_count} battles)
-            </Text>
-          )}
-        </Flex>
+      <Table.Cell>#{rank}</Table.Cell>
+      <Table.Cell>{dj.dj.name}</Table.Cell>
+      <Table.Cell align="center">{dj.elo_rating}</Table.Cell>
+      <Table.Cell align="center">{dj.battles_count}</Table.Cell>
+      <Table.Cell align="center" style={{ width: '100px' }}>
         <Button
           ref={buttonRef}
-          size="2"
+          size="1"
           variant="soft"
           onClick={
             confirmingReset ? handleReset : () => setConfirmingReset(true)
@@ -109,8 +84,8 @@ const PersonalDJRankingListItem = ({
             reset
           </Text>
         </Button>
-      </Flex>
-    </Flex>
+      </Table.Cell>
+    </Table.Row>
   );
 };
 

@@ -1,4 +1,4 @@
-import { Box, Flex } from '@radix-ui/themes';
+import { Kbd } from '@radix-ui/themes';
 
 type KeyboardKeyProps = {
   direction: 'up' | 'down' | 'left' | 'right';
@@ -20,24 +20,7 @@ const KeyboardKey = ({ direction }: KeyboardKeyProps) => {
     }
   };
 
-  return (
-    <Flex
-      style={{
-        backgroundColor: '#1c1c1e',
-        color: 'white',
-        width: '24px',
-        height: '24px',
-        borderRadius: '4px',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '14px',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-        margin: '0 2px',
-      }}
-    >
-      {getArrow(direction)}
-    </Flex>
-  );
+  return <Kbd>{getArrow(direction)}</Kbd>;
 };
 
 export default KeyboardKey;

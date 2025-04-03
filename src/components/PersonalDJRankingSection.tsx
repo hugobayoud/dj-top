@@ -1,19 +1,59 @@
-import { PropsWithChildren } from 'react';
-import { Card, Heading, Flex } from '@radix-ui/themes';
+import { ReactNode } from 'react';
+import { Heading, Flex, Table, Text, Container } from '@radix-ui/themes';
 
 import DJRankingInfoPopover from './DJRankingInfoPopover';
+import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
+import UnsavedDataPopover from './UnsavedDataPopover';
 
-const PersonalDJRankingSection = ({ children }: PropsWithChildren) => {
+interface PersonalDJRankingSectionProps {
+  children: ReactNode;
+  hasRankings: boolean;
+  saveButton?: ReactNode;
+  notifyUnsavedData: boolean;
+}
+
+const PersonalDJRankingSection = ({
+  children,
+  hasRankings,
+  saveButton,
+  notifyUnsavedData,
+}: PersonalDJRankingSectionProps) => {
   return (
-    <Card style={{ backgroundColor: 'var(--accent-2)', padding: '2rem' }}>
+    <Container>
       <Flex align="center" justify="between" gap="2" mb="4">
-        <Heading size="6">Your DJ Rankings</Heading>
-        <DJRankingInfoPopover />
+        <Flex align="center" gap="2">
+          <Heading size="6">Your DJ Rankings</Heading>
+          <DJRankingInfoPopover />
+          {notifyUnsavedData && <UnsavedDataPopover />}
+        </Flex>
+        {saveButton}
       </Flex>
-      <Flex direction="column" gap="2">
-        {children}
-      </Flex>
-    </Card>
+
+      {hasRankings ? (
+        <Table.Root variant="surface">
+          <Table.Header>
+            <Table.Row>
+              <Table.ColumnHeaderCell width="80px">Rank</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>DJ Name</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell width="100px" align="center">
+                ELO
+              </Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell width="100px" align="center">
+                Battles
+              </Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell width="80px" align="center">
+                Action
+              </Table.ColumnHeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>{children}</Table.Body>
+        </Table.Root>
+      ) : (
+        <Text size="3" color="gray">
+          Rank some DJs first and see your personal ranking here!
+        </Text>
+      )}
+    </Container>
   );
 };
 

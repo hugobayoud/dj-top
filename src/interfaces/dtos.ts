@@ -11,6 +11,7 @@ export interface DJDto {
 }
 
 export interface UserDJRatingDto {
+  id: string; // UUID
   dj: DJDto;
   elo_rating: number;
   battles_count: number;

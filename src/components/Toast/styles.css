@@ -1,0 +1,107 @@
+.ToastViewport {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 25px;
+  gap: 10px;
+  width: 390px;
+  max-width: 100vw;
+  margin: 0;
+  list-style: none;
+  z-index: 2147483647;
+  outline: none;
+}
+
+.ToastRoot {
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px,
+    hsl(206 22% 7% / 20%) 0px 10px 20px -15px;
+  padding: 15px;
+  display: grid;
+  grid-template-areas: 'title action' 'description action';
+  grid-template-columns: auto max-content;
+  column-gap: 15px;
+  align-items: center;
+}
+
+.ToastRoot[data-type='success'] {
+  border-left: 4px solid var(--green-9);
+}
+
+.ToastRoot[data-type='error'] {
+  border-left: 4px solid var(--red-9);
+}
+
+.ToastTitle {
+  grid-area: title;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: var(--slate-12);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ToastDescription {
+  grid-area: description;
+  margin: 0;
+  color: var(--slate-11);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.ToastAction {
+  grid-area: action;
+}
+
+.ToastDismiss {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--slate-11);
+  font-size: 13px;
+}
+
+/* Animation styles */
+@keyframes slideIn {
+  from {
+    transform: translateX(calc(100% + 25px));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(100% + 25px));
+  }
+}
+
+.ToastRoot[data-state='open'] {
+  animation: slideIn 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ToastRoot[data-state='closed'] {
+  animation: slideOut 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ToastRoot[data-swipe='move'] {
+  transform: translateX(var(--radix-toast-swipe-move-x));
+}
+
+.ToastRoot[data-swipe='cancel'] {
+  transform: translateX(0);
+  transition: transform 200ms ease-out;
+}
+
+.ToastRoot[data-swipe='end'] {
+  animation: slideOut 100ms ease-out;
+}

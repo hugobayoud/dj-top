@@ -1,4 +1,4 @@
-import { Flex, Text, Button } from '@radix-ui/themes';
+import { Button, Table } from '@radix-ui/themes';
 
 import { UserDJRatingDto } from '@/interfaces/dtos';
 
@@ -9,27 +9,19 @@ interface UnknownDJListItemProps {
 
 const UnknownDJListItem = ({ dj, onRevertStatus }: UnknownDJListItemProps) => {
   return (
-    <Flex
-      key={dj.dj.id}
-      align="center"
-      gap="3"
-      style={{
-        padding: '1rem',
-        borderBottom: '1px solid var(--accent-3)',
-      }}
-    >
-      <Text size="4" style={{ flex: 1 }}>
-        {dj.dj.name}
-      </Text>
-      <Button
-        size="2"
-        variant="solid"
-        onClick={() => onRevertStatus(dj, true, -1)}
-        style={{ backgroundColor: 'var(--accent-9)' }}
-      >
-        I know this DJ
-      </Button>
-    </Flex>
+    <Table.Row key={dj.dj.id}>
+      <Table.Cell>{dj.dj.name}</Table.Cell>
+      <Table.Cell align="center">
+        <Button
+          size="2"
+          variant="solid"
+          onClick={() => onRevertStatus(dj, true, -1)}
+          style={{ backgroundColor: 'var(--accent-9)' }}
+        >
+          I know this DJ
+        </Button>
+      </Table.Cell>
+    </Table.Row>
   );
 };
 
