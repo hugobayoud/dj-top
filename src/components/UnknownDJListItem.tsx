@@ -1,16 +1,16 @@
 import { Flex, Text, Button } from '@radix-ui/themes';
 
-import { DJ } from '@/constant/djs';
+import { UserDJRatingDto } from '@/interfaces/dtos';
 
 interface UnknownDJListItemProps {
-  dj: DJ;
-  onRevertStatus: (dj: DJ, known: boolean, weight: number) => void;
+  dj: UserDJRatingDto;
+  onRevertStatus: (dj: UserDJRatingDto, known: boolean, index: number) => void;
 }
 
 const UnknownDJListItem = ({ dj, onRevertStatus }: UnknownDJListItemProps) => {
   return (
     <Flex
-      key={dj.id}
+      key={dj.dj.id}
       align="center"
       gap="3"
       style={{
@@ -19,7 +19,7 @@ const UnknownDJListItem = ({ dj, onRevertStatus }: UnknownDJListItemProps) => {
       }}
     >
       <Text size="4" style={{ flex: 1 }}>
-        {dj.name}
+        {dj.dj.name}
       </Text>
       <Button
         size="2"

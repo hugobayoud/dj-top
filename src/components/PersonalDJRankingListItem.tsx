@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
 import { ResetIcon } from '@radix-ui/react-icons';
+import { useState, useEffect, useRef } from 'react';
 import { Flex, Text, Button } from '@radix-ui/themes';
 
-import { DJ } from '@/constant/djs';
 import { getBackgroundColor } from '@/utils/utils';
+import { UserDJRatingDto } from '@/interfaces/dtos';
 
 interface PersonalDJRankingListItemProps {
-  dj: DJ;
+  dj: UserDJRatingDto;
   onDJReset: (djId: string) => void;
   index: number;
 }
@@ -38,13 +38,13 @@ const PersonalDJRankingListItem = ({
   }, [confirmingReset]);
 
   const handleReset = () => {
-    onDJReset(dj.id);
+    onDJReset(dj.dj.id);
     setConfirmingReset(false);
   };
 
   return (
     <Flex
-      key={dj.id}
+      key={dj.dj.id}
       align="center"
       gap="3"
       style={{
@@ -58,13 +58,27 @@ const PersonalDJRankingListItem = ({
           {`#${index + 1}`}
         </Text>
         <Text size="4" weight={index === 0 ? 'bold' : 'regular'}>
-          {dj.name}
+          {dj.dj.name}
         </Text>
       </Flex>
-      <Flex gap="2" align="center">
-        <Text size="3" color="gray">
-          {dj.weight} wins
-        </Text>
+      <Flex
+        gap="2"
+        align="center"
+        direction="column"
+        style={{ alignItems: 'flex-end' }}
+      >
+        <Flex gap="2" align="center">
+          {dj.elo_rating && (
+            <Text size="3" color="gray">
+              ELO: {dj.elo_rating}
+            </Text>
+          )}
+          {dj.battles_count && (
+            <Text size="2" color="gray">
+              ({dj.battles_count} battles)
+            </Text>
+          )}
+        </Flex>
         <Button
           ref={buttonRef}
           size="2"

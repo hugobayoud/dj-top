@@ -1,9 +1,12 @@
-import { DJ } from '@/constant/djs';
+import { UserDJRatingDto } from '@/interfaces/dtos';
 
-export function getRandomDJs(djs: DJ[], excludes: DJ[]): [DJ, DJ] {
+export function getRandomDJs(
+  djs: UserDJRatingDto[],
+  excludes: UserDJRatingDto[]
+): [UserDJRatingDto, UserDJRatingDto] {
   // Filter out unknown DJs and excluded DJs
   const availableDJs = djs.filter(
-    (dj) => !excludes.some((e) => e.id === dj.id) && dj.unknown !== true // Exclude DJs that are marked as unknown
+    (dj) => !excludes.some((e) => e.dj.id === dj.dj.id) && dj.unknown !== true // Exclude DJs that are marked as unknown
   );
 
   // If we don't have enough DJs, throw an error

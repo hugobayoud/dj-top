@@ -1,10 +1,10 @@
 import { Flex } from '@radix-ui/themes';
 
-import { DJ } from '@/constant/djs';
 import DJBattleCard from './DJBattleCard';
+import { UserDJRatingDto } from '@/interfaces/dtos';
 
 export interface DJBattle {
-  dj: DJ;
+  dj: UserDJRatingDto;
   currentRank: number;
   currentPosition: 'left' | 'right';
 }
@@ -29,12 +29,12 @@ const DJBattleSection = ({
   return (
     <Flex gap="6" justify="center" align="center">
       <DJBattleCard
-        dj={leftDJ}
+        oponent={leftDJ}
         onChoicePress={onLeftKeyPress}
         onUnknownStatusPress={onUpKeyPress}
       />
       <DJBattleCard
-        dj={rightDJ}
+        oponent={rightDJ}
         onChoicePress={onRightKeyPress}
         onUnknownStatusPress={onDownKeyPress}
       />

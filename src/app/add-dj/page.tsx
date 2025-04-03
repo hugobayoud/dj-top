@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/navigation';
 import { Button, Flex, Text, TextField, Box } from '@radix-ui/themes';
 
-import { supabase } from '@/utils/supabase.utils';
+import { supabase } from '@/utils/supabase/client';
 import SubmitDJLayout from '@/components/SubmitDJLayout';
 import CreateDJNamePopover from '@/components/CreateDJNamePopover';
 import { sanitizeUrl, validateSocialMediaUrl } from '@/utils/url.utils';

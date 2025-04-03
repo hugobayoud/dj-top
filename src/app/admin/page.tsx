@@ -23,7 +23,7 @@ import {
 import { useState, useEffect } from 'react';
 
 import { DJ } from '@/database/entities';
-import { supabase } from '@/utils/supabase.utils';
+import { supabase } from '@/utils/supabase/client';
 import ImageZoomDialog from '@/components/ImageZoomDialog';
 import RejectPendingDialog from '@/components/RejectPendingDialog';
 

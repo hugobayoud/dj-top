@@ -2,26 +2,25 @@ import Image from 'next/image';
 import { Card, Flex, Box, Text, Button } from '@radix-ui/themes';
 
 import KeyboardKey from './KeyboardKey';
+import { BASE_ELO } from '@/constant/djs';
 import { DJBattle } from './DJBattleSection';
 
 interface DJBattleCardProps {
-  dj: DJBattle;
+  oponent: DJBattle;
   onChoicePress: () => void;
   onUnknownStatusPress: () => void;
 }
 
 const DJBattleCard = ({
-  dj,
+  oponent,
   onChoicePress,
   onUnknownStatusPress,
 }: DJBattleCardProps) => {
   return (
     <Card
-      key={dj.dj.id}
+      key={oponent.dj.dj.id}
       style={{
         padding: '2rem',
-        backgroundColor: 'var(--accent-2)',
-        maxWidth: '400px',
         border: '2px solid transparent',
         transition: 'border-color 0.2s ease',
         cursor: 'pointer',
@@ -45,8 +44,8 @@ const DJBattleCard = ({
           }}
         >
           <Image
-            src={dj.dj.photo}
-            alt={dj.dj.name}
+            src={oponent.dj.dj.photo}
+            alt={oponent.dj.dj.name}
             fill
             style={{ objectFit: 'cover' }}
           />
@@ -64,9 +63,9 @@ const DJBattleCard = ({
               fontWeight: 'bold',
             }}
           >
-            #{dj.currentRank || '?'}
+            #{oponent.currentRank || '?'}
           </Box>
-          {/* Wins Badge */}
+          {/* Elo Rating Badge */}
           <Box
             style={{
               position: 'absolute',
@@ -80,11 +79,11 @@ const DJBattleCard = ({
               fontWeight: 'bold',
             }}
           >
-            {dj.dj.weight || 0} wins
+            {oponent.dj.elo_rating || BASE_ELO}
           </Box>
         </Box>
         <Text size="6" weight="bold" align="center">
-          {dj.dj.name}
+          {oponent.dj.dj.name}
         </Text>
 
         <Button
@@ -93,9 +92,13 @@ const DJBattleCard = ({
           onClick={onChoicePress}
           style={{ width: '200px' }}
         >
-          {dj.currentPosition === 'left' && <KeyboardKey direction="left" />}
+          {oponent.currentPosition === 'left' && (
+            <KeyboardKey direction="left" />
+          )}
           {`I prefer this DJ`}
-          {dj.currentPosition === 'right' && <KeyboardKey direction="right" />}
+          {oponent.currentPosition === 'right' && (
+            <KeyboardKey direction="right" />
+          )}
         </Button>
         <Button
           size="3"
@@ -103,9 +106,11 @@ const DJBattleCard = ({
           color="amber"
           onClick={onUnknownStatusPress}
         >
-          {dj.currentPosition === 'left' && <KeyboardKey direction="up" />}
+          {oponent.currentPosition === 'left' && <KeyboardKey direction="up" />}
           {`I don't know this DJ`}
-          {dj.currentPosition === 'right' && <KeyboardKey direction="down" />}
+          {oponent.currentPosition === 'right' && (
+            <KeyboardKey direction="down" />
+          )}
         </Button>
       </Flex>
     </Card>
