@@ -19,9 +19,11 @@ export interface UserDJRatingDto {
   last_updated: Date;
 }
 
-export interface GlobalRankingDto {
+export interface GlobalDJRankingDto {
   dj: DJDto;
   average_elo_rating: number;
   total_battles: number;
   last_updated: Date;
+  user_ranking?: number;
+  user_knows_this_dj?: boolean;
 }

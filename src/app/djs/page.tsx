@@ -9,25 +9,36 @@ import {
   Container,
 } from '@radix-ui/themes';
 
-import { DJ } from '@/database/entities';
 import DJListItem from '@/components/DJListItem';
-import { fetchDJs } from '@/utils/api';
+import { fetchGlobalDJRankings } from '@/utils/api';
 
-const getDjs = async (page: number) => {
-  return fetchDJs({
-    isServer: true,
+const getDjsWithUserRanking = async (page: number) => {
+  // Fetch the global rankings for the DJs
+  const globalRankings = await fetchGlobalDJRankings({
     page,
-    approvedOnly: true,
+    limit: 100,
+    userId: 'user_1',
+    sortBy: 'average_elo_rating_desc',
+    filterBy: 'all',
   });
+
+  // Merge the user rankings with the DJs
+
+  return {
+    djs: globalRankings.globalRankings,
+    totalPages: globalRankings.totalPages,
+  };
 };
 
 export default async function Page({
   searchParams,
 }: {
-  searchParams: { page?: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const currentPage = parseInt(searchParams.page || '1');
-  const { djs, totalPages } = await getDjs(currentPage);
+  const currentPage = parseInt(
+    typeof searchParams.page === 'string' ? searchParams.page : '1'
+  );
+  const { djs, totalPages } = await getDjsWithUserRanking(currentPage);
 
   return (
     <Container size="4">
@@ -43,7 +54,13 @@ export default async function Page({
           m={{ initial: '0', sm: '4' }}
         >
           {djs.map((dj) => (
-            <DJListItem key={dj.id} dj={dj} />
+            <DJListItem
+              key={dj.dj.id}
+              dj={dj.dj}
+              averageEloRating={dj.average_elo_rating}
+              userRank={dj.user_ranking}
+              userKnowsThisDJ={dj.user_knows_this_dj}
+            />
           ))}
         </Grid>
 
