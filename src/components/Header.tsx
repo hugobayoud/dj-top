@@ -3,7 +3,6 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Button, Container, Flex } from '@radix-ui/themes';
 import { DiscIcon, HomeIcon, PersonIcon } from '@radix-ui/react-icons';
-import UserProfile from './UserProfile';
 
 const Header = () => {
   const router = useRouter();
@@ -50,8 +49,6 @@ const Header = () => {
               Global Rankings
             </Button>
           )}
-
-          <UserProfile />
         </Flex>
       </Flex>
     </Container>

@@ -3,13 +3,11 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Flex, Container, Button } from '@radix-ui/themes';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 
 import { DJ } from '@/database/entities';
 import { getRandomDJs } from '@/utils/utils';
 import { useToast } from '@/components/Toast/Toast';
 import { supabase } from '@/utils/supabase/client';
-import { useAuth } from '@/utils/supabase/auth-context';
 import HeroSection from '@/components/HeroSection';
 import { UserDJRatingDto } from '@/interfaces/dtos';
 import { BASE_ELO, K_FACTOR } from '@/constant/djs';
@@ -33,17 +31,6 @@ export default function Page() {
   // Get toast function from context
   const { showToast } = useToast();
 
-  // Get authenticated user from context
-  const { user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
-
-  // Redirect to login if user is not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, authLoading, router]);
-
   // Calculate Elo rating change
   const calculateEloChange = (
     winnerRating: number,
@@ -58,9 +45,6 @@ export default function Page() {
 
   // Fetch approved DJs and user ratings
   useEffect(() => {
-    // Don't fetch data until we have an authenticated user
-    if (authLoading || !user) return;
-
     const loadData = async () => {
       try {
         setIsLoading(true);
@@ -77,7 +61,7 @@ export default function Page() {
         const { data: userDJRatings, error: ratingsError } = await supabase
           .from('user_dj_ratings')
           .select('*, dj:djs(*)')
-          .eq('user_id', user.id);
+          .eq('user_id', 'user_1');
 
         if (ratingsError) throw ratingsError;
 
@@ -124,20 +108,10 @@ export default function Page() {
     };
 
     loadData();
-  }, [user, authLoading]);
+  }, []);
 
   // Save user's DJ ratings to the database
   const saveRankings = async () => {
-    if (!user) {
-      showToast({
-        type: 'error',
-        title: 'Not logged in',
-        description: 'Please log in to save your rankings.',
-        duration: 5000,
-      });
-      return;
-    }
-
     try {
       setIsSaving(true);
 
@@ -149,7 +123,7 @@ export default function Page() {
       // Prepare upsert data
       const upsertData = djsToSave.map((dj) => ({
         id: dj.id,
-        user_id: user.id,
+        user_id: 'user_1',
         dj_id: dj.dj.id,
         elo_rating: dj.elo_rating,
         battles_count: dj.battles_count,
@@ -309,9 +283,7 @@ export default function Page() {
       .sort((a, b) => a.dj.name.localeCompare(b.dj.name));
   }, [allDJs]);
 
-  if (authLoading || isLoading) return <LoadingScreen />;
-
-  if (!user) return null; // Don't render anything if not authenticated (redirecting to login)
+  if (isLoading) return <LoadingScreen />;
 
   return (
     <Container

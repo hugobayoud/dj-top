@@ -25,7 +25,7 @@ interface FetchGlobalDJRankingsOptions {
 export async function fetchGlobalDJRankings(
   options: FetchGlobalDJRankingsOptions
 ): Promise<GlobalDJRankingPaginatedResponse> {
-  const { page, limit, userId, sortBy } = options;
+  const { page, limit, sortBy } = options;
 
   const offset = (page - 1) * limit;
 
@@ -56,7 +56,7 @@ async function fetchSortByGlobalRating(
   offset: number
 ): Promise<GlobalDJRankingDto[]> {
   // Fetch global rankings with the DJ data
-  const { data, error, count } = await supabase
+  const { data, error } = await supabase
     .from(EntityName.GLOBAL_RANKINGS)
     .select('*, dj:dj_id(*)', { count: 'exact' })
     .eq('dj.status', 'APPROVED')
@@ -81,7 +81,7 @@ async function fetchSortByUserRating(
   offset: number
 ): Promise<GlobalDJRankingDto[]> {
   // Fetch user ratings with the DJ data
-  const { data, error, count } = await supabase
+  const { data, error } = await supabase
     .from(EntityName.USER_DJ_RATINGS)
     .select('*, dj:dj_id(*)', { count: 'exact' })
     .eq('dj.status', 'APPROVED')
@@ -109,7 +109,7 @@ async function fetchSortByUserDJUnknown(
   offset: number
 ): Promise<GlobalDJRankingDto[]> {
   // Fetch user ratings with the DJ data
-  const { data, error, count } = await supabase
+  const { data, error } = await supabase
     .from(EntityName.USER_DJ_RATINGS)
     .select('*, dj:dj_id(*)', { count: 'exact' })
     .eq('dj.status', 'APPROVED')
@@ -121,7 +121,7 @@ async function fetchSortByUserDJUnknown(
 
   const userRatingsData: (UserDJRating & { dj: DJ })[] = data;
 
-  return userRatingsData.map((item, index) => ({
+  return userRatingsData.map((item) => ({
     dj: item.dj,
     average_elo_rating: -1,
     total_battles: -1,

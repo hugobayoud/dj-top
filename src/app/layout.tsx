@@ -5,7 +5,6 @@ import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ToastContainer } from '@/components/Toast/Toast';
-import { AuthProvider } from '@/utils/supabase/auth-context';
 
 export const metadata: Metadata = {
   title: 'DJ Top Ranking',
@@ -34,11 +33,9 @@ export default function RootLayout({
           radius="medium"
           hasBackground={true}
         >
-          <AuthProvider>
-            <Header />
-            <ToastContainer>{children}</ToastContainer>
-            <Footer />
-          </AuthProvider>
+          <Header />
+          <ToastContainer>{children}</ToastContainer>
+          <Footer />
         </Theme>
       </body>
       <script src="https://accounts.google.com/gsi/client" async></script>

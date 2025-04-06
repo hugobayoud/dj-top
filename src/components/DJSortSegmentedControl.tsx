@@ -1,20 +1,26 @@
 import { SegmentedControl } from '@radix-ui/themes';
-import { useRouter } from 'next/navigation';
 import { FetchDJsSortOption } from '@/constant/djs';
 
 interface DJSortSegmentedControlProps {
   currentSort: FetchDJsSortOption;
   currentPage: number;
+  onSortChange?: (sort: FetchDJsSortOption) => void;
 }
 
 export default function DJSortSegmentedControl({
   currentSort,
   currentPage,
+  onSortChange,
 }: DJSortSegmentedControlProps) {
-  const router = useRouter();
-
   const handleSortChange = (value: string) => {
-    router.push(`/djs?page=${currentPage}&sort=${value}`);
+    // If parent provided a callback, use it for client-side update
+    if (onSortChange) {
+      onSortChange(value as FetchDJsSortOption);
+    }
+
+    // Update URL without full page reload
+    const url = `/djs?page=${currentPage}&sort=${value}`;
+    window.history.pushState({}, '', url);
   };
 
   return (
