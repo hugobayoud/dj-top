@@ -1,27 +1,29 @@
-import Image from 'next/image';
-import { DJ } from '@/database/entities';
-import { Card, Box, Heading, Flex, Badge } from '@radix-ui/themes';
 import {
   Link1Icon,
   GlobeIcon,
   VideoIcon,
   InstagramLogoIcon,
 } from '@radix-ui/react-icons';
+import Image from 'next/image';
+import { Card, Box, Heading, Flex, Badge } from '@radix-ui/themes';
+
 import SocialIconButton from './SocialIconButton';
+import { FetchDJsSortOption } from '@/constant/djs';
+import { GlobalDJRankingDto } from '@/interfaces/dtos';
 
 interface DJListItemProps {
-  dj: DJ;
-  averageEloRating: number;
-  userRank?: number;
-  userKnowsThisDJ?: boolean;
+  sort: FetchDJsSortOption;
+  item: GlobalDJItem;
 }
 
-export default function DJListItem({
-  dj,
-  averageEloRating,
-  userRank,
-  userKnowsThisDJ,
-}: DJListItemProps) {
+export interface GlobalDJItem extends GlobalDJRankingDto {
+  ranking?: number;
+  user_ranking?: number;
+}
+
+export default function DJListItem({ sort, item }: DJListItemProps) {
+  const { user_ranking, user_knows_this_dj, ranking, dj } = item;
+
   return (
     <Card size="2" style={{ border: '2px solid transparent' }}>
       <Flex direction="column" align="center" style={{ position: 'relative' }}>
@@ -29,13 +31,23 @@ export default function DJListItem({
           gap="2"
           style={{ position: 'absolute', top: '8px', left: '8px', zIndex: 10 }}
         >
-          <Badge color="blue" variant="soft">
-            Global: {averageEloRating ? `#${averageEloRating}` : '#?'}
-          </Badge>
-          <Badge color="green" variant="soft">
-            Personal:{' '}
-            {userKnowsThisDJ ? 'Unknown' : userRank ? `#${userRank}` : '#?'}
-          </Badge>
+          {sort === 'global_rating' && (
+            <Badge size="3" color="blue" variant="solid">
+              {ranking ? `#${ranking}` : '#?'}
+            </Badge>
+          )}
+
+          {sort === 'user_rating' && (
+            <Badge size="3" color="green" variant="solid">
+              {`${
+                user_knows_this_dj
+                  ? user_ranking
+                    ? `#${user_ranking}`
+                    : '#?'
+                  : 'Unknown'
+              }`}
+            </Badge>
+          )}
         </Flex>
         <Image
           src={dj.photo}

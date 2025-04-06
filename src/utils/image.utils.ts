@@ -1,5 +1,9 @@
 import { ImageOptimisation } from '@/constant/image';
 
+export interface OptimizedFile extends File {
+  extension: string;
+}
+
 /**
  * Check if the browser supports WebP images and get output format details
  * @returns Object containing output format and extension
@@ -92,7 +96,7 @@ export const optimizeImage = (file: File): Promise<Blob> => {
               }
             );
             // Store the extension for later use
-            (optimizedFile as any).extension = outputExtension;
+            (optimizedFile as OptimizedFile).extension = outputExtension;
             resolve(optimizedFile);
           } else {
             reject(new Error('Failed to convert image to blob'));

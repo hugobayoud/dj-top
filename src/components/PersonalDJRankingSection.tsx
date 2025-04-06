@@ -1,9 +1,8 @@
 import { ReactNode } from 'react';
 import { Heading, Flex, Table, Text, Container } from '@radix-ui/themes';
 
-import DJRankingInfoPopover from './DJRankingInfoPopover';
-import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import UnsavedDataPopover from './UnsavedDataPopover';
+import DJRankingInfoPopover from './DJRankingInfoPopover';
 
 interface PersonalDJRankingSectionProps {
   children: ReactNode;

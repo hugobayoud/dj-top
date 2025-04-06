@@ -14,11 +14,11 @@ const DJRankingInfoPopover = () => {
           <Text weight="bold">How DJs are ranked</Text>
           <Text>
             We use an <strong>Elo rating system</strong> (like in chess and most
-            video games) to rank DJs. Here's how it works:
+            video games) to rank DJs. {`Here's how it works:`}
           </Text>
           <Text>• Every DJ starts with 1400 points</Text>
           <Text>
-            • When you choose one DJ over another, both DJs' ratings are updated
+            {`• When you choose one DJ over another, both DJs' ratings are updated`}
           </Text>
           <Text>• Beating higher-rated DJs earns more points</Text>
           <Text>

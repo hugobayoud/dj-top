@@ -20,8 +20,9 @@ const DangerousSection = ({ onReset }: DangerousSectionProps) => {
             be undone.
           </Text>
           <Text size="3" color="gray" style={{ opacity: 0.6 }}>
-            You can reset one DJ's ranking at a time by clicking on the reset
-            button <ResetIcon />.
+            {`You can reset one DJ's ranking at a time by clicking on the reset
+            button`}{' '}
+            <ResetIcon />.
           </Text>
         </Flex>
 

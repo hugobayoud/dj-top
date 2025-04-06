@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react';
-import { Card, Flex, Heading, Text, Table, Container } from '@radix-ui/themes';
+import { Flex, Heading, Text, Table, Container } from '@radix-ui/themes';
 
 import KeyboardKey from './KeyboardKey';
 
@@ -9,16 +9,9 @@ interface UnknownDjsSectionProps extends PropsWithChildren {
 
 const UnknownDjsSection = ({ length, children }: UnknownDjsSectionProps) => {
   return (
-    <Container
-      style={
-        {
-          // backgroundColor: 'var(--accent-2)',
-          // padding: '2rem',
-        }
-      }
-    >
+    <Container>
       <Heading size="6" mb="4">
-        DJs You Don't Know Yet
+        {`DJs You Don't Know Yet`}
       </Heading>
       {length === 0 ? (
         <Text>

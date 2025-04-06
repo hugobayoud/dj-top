@@ -80,6 +80,7 @@ export default function AdminPage() {
         setError(data.error || 'Invalid password');
       }
     } catch (err) {
+      console.error('Error authenticating:', err);
       setError('Failed to authenticate');
     }
   };

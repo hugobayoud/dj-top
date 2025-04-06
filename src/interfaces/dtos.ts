@@ -24,6 +24,8 @@ export interface GlobalDJRankingDto {
   average_elo_rating: number;
   total_battles: number;
   last_updated: Date;
+  ranking?: number;
   user_ranking?: number;
+  user_rating?: number;
   user_knows_this_dj?: boolean;
 }

@@ -31,3 +31,10 @@ export interface GlobalRanking {
   total_battles: number;
   last_updated: Date;
 }
+
+export enum EntityName {
+  DJS = 'djs',
+  USERS = 'users',
+  USER_DJ_RATINGS = 'user_dj_ratings',
+  GLOBAL_RANKINGS = 'global_rankings',
+}

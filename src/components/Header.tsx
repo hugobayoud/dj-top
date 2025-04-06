@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { Button, Container, Flex } from '@radix-ui/themes';
 import { DiscIcon, HomeIcon, PersonIcon } from '@radix-ui/react-icons';
+import UserProfile from './UserProfile';
 
 const Header = () => {
   const router = useRouter();
@@ -11,6 +12,7 @@ const Header = () => {
   const isHome = pathname === '/';
   const isAddingDj = pathname === '/add-dj';
   const isDJsList = pathname === '/djs';
+  const isLogin = pathname === '/login';
 
   return (
     <Container size="4" style={{ maxWidth: '80%', margin: '2rem auto' }}>
@@ -27,7 +29,7 @@ const Header = () => {
         )}
 
         <Flex justify="end" style={{ width: '100%' }} align="center" gap="2">
-          {!isAddingDj && (
+          {!isAddingDj && !isLogin && (
             <Button
               variant="soft"
               onClick={() => router.push('/add-dj')}
@@ -38,7 +40,7 @@ const Header = () => {
             </Button>
           )}
 
-          {!isDJsList && (
+          {!isDJsList && !isLogin && (
             <Button
               variant="soft"
               onClick={() => router.push('/djs')}
@@ -48,6 +50,8 @@ const Header = () => {
               Global Rankings
             </Button>
           )}
+
+          <UserProfile />
         </Flex>
       </Flex>
     </Container>

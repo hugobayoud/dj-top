@@ -1,22 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DJ Top Ranking App
 
-## Getting Started
+A web application for ranking your favorite DJs.
 
-First, run the development server:
+## Authentication Setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+This application uses Supabase Authentication with Google OAuth. Follow these steps to set it up:
+
+### 1. Create a Supabase Project
+
+1. Go to [Supabase](https://supabase.com/) and create a new project
+2. Get your project URL and anon key from the project settings
+
+### 2. Set up environment variables
+
+Create a `.env.local` file in the root of your project with the following variables:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Set up Google OAuth Provider
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or use an existing one
+3. Navigate to "APIs & Services" > "Credentials"
+4. Click "Create Credentials" and select "OAuth client ID"
+5. Choose "Web application" as the application type
+6. Add your app's URL to the "Authorized JavaScript origins" (e.g., `http://localhost:3000` for local development)
+7. Add your app's callback URL to the "Authorized redirect URIs" (e.g., `http://localhost:3000/auth/callback` for local development)
+8. Copy the Client ID and Client Secret
+
+### 4. Configure Supabase Auth
+
+1. In your Supabase project dashboard, go to "Authentication" > "Providers"
+2. Find and enable "Google"
+3. Paste your Google Client ID and Client Secret
+4. Save the changes
+
+### 5. Update Redirect URLs
+
+1. In your Supabase project dashboard, go to "Authentication" > "URL Configuration"
+2. Add your site URL (e.g., `http://localhost:3000` for local development)
+3. Add your redirect URL (e.g., `http://localhost:3000/auth/callback`)
+
+## Running the application
+
+```bash
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

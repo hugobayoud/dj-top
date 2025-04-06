@@ -1,147 +1,14 @@
-import { DJ, GlobalRanking, UserDJRating } from '@/database/entities';
-import { GlobalDJRankingDto } from '@/interfaces/dtos';
+import {
+  DJ,
+  EntityName,
+  UserDJRating,
+  GlobalRanking,
+} from '@/database/entities';
 import { supabase } from '@/utils/supabase/client';
-
-export interface DJsPaginatedResponse {
-  djs: DJ[];
-  total: number;
-  page: number;
-  totalPages: number;
-  hasMore: boolean;
-}
-
-/**
- * Fetch DJs from the database
- * Works in both client and server components
- */
-export async function fetchDJs(options: {
-  page?: number;
-  limit?: number;
-  approvedOnly?: boolean;
-  sortBy?: 'name' | 'globalRanking' | 'userRanking';
-  userId?: string;
-  excludeUnknown?: boolean;
-}): Promise<DJsPaginatedResponse> {
-  const limit = options.limit
-    ? options.limit > 100
-      ? 100
-      : options.limit
-    : 100;
-  const {
-    page = 1,
-    approvedOnly = true,
-    sortBy = 'name',
-    userId = undefined,
-    excludeUnknown = false,
-  } = options;
-
-  // Calculate offset for pagination
-  const offset = (page - 1) * limit;
-
-  try {
-    let query;
-
-    // Determine the select statement based on sorting requirements
-    if (sortBy === 'globalRanking') {
-      // Join with global_rankings table
-      query = supabase
-        .from('djs')
-        .select('*, global_rankings!inner(*)', { count: 'exact' });
-    } else if (sortBy === 'userRanking' && userId) {
-      // Join with user_dj_ratings table for specific user
-      query = supabase
-        .from('djs')
-        .select('*, user_dj_ratings!inner(*)', { count: 'exact' });
-
-      // Add filter for the specific user
-      query = query.eq('user_dj_ratings.user_id', userId);
-
-      // Filter out unknown DJs if requested
-      if (excludeUnknown) {
-        query = query.is('user_dj_ratings.unknown', false);
-      }
-    } else {
-      // Default select without joins
-      if (excludeUnknown && userId) {
-        // If we need to filter unknown DJs but not sorting by userRanking
-        query = supabase
-          .from('djs')
-          .select('*, user_dj_ratings(*)', { count: 'exact' })
-          .eq('user_dj_ratings.user_id', userId)
-          .is('user_dj_ratings.unknown', false);
-      } else {
-        query = supabase.from('djs').select('*', { count: 'exact' });
-      }
-    }
-
-    // Apply filters as needed
-    if (approvedOnly) {
-      query = query.eq('status', 'APPROVED');
-    }
-
-    // Apply sorting based on the sortBy option
-    if (sortBy === 'globalRanking') {
-      query = query.order('global_rankings.average_elo_rating', {
-        ascending: false,
-      });
-    } else if (sortBy === 'userRanking' && userId) {
-      query = query.order('user_dj_ratings.elo_rating', { ascending: false });
-    } else {
-      query = query.order('name', { ascending: true });
-    }
-
-    // Apply pagination
-    const { data, error, count } = await query.range(
-      offset,
-      offset + limit - 1
-    );
-
-    if (error) throw error;
-
-    // Process data to flatten the structure if needed
-    const processedData = data.map((item: any) => {
-      if (sortBy === 'globalRanking' && item.global_rankings) {
-        const { global_rankings, ...dj } = item;
-        return {
-          ...dj,
-          average_elo_rating: global_rankings.average_elo_rating,
-          total_battles: global_rankings.total_battles,
-        };
-      } else if (sortBy === 'userRanking' && userId && item.user_dj_ratings) {
-        const { user_dj_ratings, ...dj } = item;
-        return {
-          ...dj,
-          elo_rating: user_dj_ratings.elo_rating,
-          battles_count: user_dj_ratings.battles_count,
-          unknown: user_dj_ratings.unknown,
-        };
-      } else if (excludeUnknown && userId && item.user_dj_ratings) {
-        const { user_dj_ratings, ...dj } = item;
-        return {
-          ...dj,
-          elo_rating: user_dj_ratings[0]?.elo_rating,
-          battles_count: user_dj_ratings[0]?.battles_count,
-          unknown: user_dj_ratings[0]?.unknown,
-        };
-      }
-      return item;
-    });
-
-    return {
-      djs: processedData as DJ[],
-      total: count || 0,
-      page,
-      totalPages: Math.ceil((count || 0) / limit),
-      hasMore: offset + limit < (count || 0),
-    };
-  } catch (error) {
-    console.error('Error fetching DJs:', error);
-    throw error;
-  }
-}
+import { GlobalDJRankingDto } from '@/interfaces/dtos';
 
 export interface GlobalDJRankingPaginatedResponse {
-  globalRankings: GlobalDJRankingDto[];
+  list: GlobalDJRankingDto[];
   total: number;
   page: number;
   totalPages: number;
@@ -152,130 +19,290 @@ interface FetchGlobalDJRankingsOptions {
   page: number;
   limit: number;
   userId: string;
-  sortBy:
-    | 'average_elo_rating_asc'
-    | 'average_elo_rating_desc'
-    | 'user_ranking_asc'
-    | 'user_ranking_desc';
-  filterBy: 'all' | 'only_known_by_user';
+  sortBy: 'user_rating' | 'global_rating' | 'user_unknown';
 }
 
 export async function fetchGlobalDJRankings(
   options: FetchGlobalDJRankingsOptions
 ): Promise<GlobalDJRankingPaginatedResponse> {
-  // Validate and sanitize inputs
-  const page = Math.max(0, options.page); // First page is 0
-  const limit = Math.min(100, Math.max(1, options.limit)); // Between 1 and 100
-  const offset = page * limit;
+  const { page, limit, userId, sortBy } = options;
 
-  // Build base query
-  let baseQuery = supabase.from('global_ranking');
+  const offset = (page - 1) * limit;
 
-  // Handle user-specific filtering and sorting
-  if (
-    options.sortBy === 'user_ranking_asc' ||
-    options.sortBy === 'user_ranking_desc' ||
-    options.filterBy === 'only_known_by_user'
-  ) {
-    // Query with user-specific join
-    let query = baseQuery
-      .select(
-        `
-        *,
-        dj:dj_id(id, name, photo, status),
-        user_dj_rating!inner(id, user_id, dj_id, elo_rating, unknown)
-      `
-      )
-      .eq('dj.status', 'APPROVED')
-      .eq('user_dj_rating.user_id', options.userId);
+  let list: GlobalDJRankingDto[] = [];
 
-    // Apply known-by-user filter if requested
-    if (options.filterBy === 'only_known_by_user') {
-      query = query.eq('user_dj_rating.unknown', false);
-    }
-
-    // Apply sorting
-    if (options.sortBy === 'user_ranking_asc') {
-      query = query.order('user_dj_rating.elo_rating', { ascending: true });
-    } else if (options.sortBy === 'user_ranking_desc') {
-      query = query.order('user_dj_rating.elo_rating', { ascending: false });
-    } else if (options.sortBy === 'average_elo_rating_asc') {
-      query = query.order('average_elo_rating', { ascending: true });
-    } else {
-      query = query.order('average_elo_rating', { ascending: false });
-    }
-
-    // Get count (separate query for count to avoid typing issues)
-    const countQuery = baseQuery
-      .select('id', { count: 'exact', head: true })
-      .eq('dj.status', 'APPROVED')
-      .eq('user_dj_rating.user_id', options.userId);
-
-    if (options.filterBy === 'only_known_by_user') {
-      countQuery.eq('user_dj_rating.unknown', false);
-    }
-
-    const { count: totalCount, error: countError } = await countQuery;
-    if (countError) throw countError;
-
-    // Apply pagination to data query
-    query = query.range(offset, offset + limit - 1);
-
-    // Execute the query
-    const { data, error } = await query;
-    if (error) throw error;
-
-    // Format the results
-    const totalPages = Math.ceil((totalCount || 1) / limit);
-
-    return {
-      globalRankings: data || [],
-      total: totalCount || 1,
-      page,
-      totalPages,
-      hasMore: page < totalPages - 1,
-    };
-  } else {
-    // Simple query without user-specific joins
-    let query = baseQuery
-      .select(
-        `
-        *,
-        dj:dj_id(id, name, photo, status)
-      `
-      )
-      .eq('dj.status', 'APPROVED');
-
-    // Apply sorting
-    if (options.sortBy === 'average_elo_rating_asc') {
-      query = query.order('average_elo_rating', { ascending: true });
-    } else {
-      query = query.order('average_elo_rating', { ascending: false });
-    }
-
-    // Get count
-    const { count: totalCount, error: countError } = await baseQuery
-      .select('id', { count: 'exact', head: true })
-      .eq('dj.status', 'APPROVED');
-
-    if (countError) throw countError;
-
-    // Apply pagination
-    query = query.range(offset, offset + limit - 1);
-
-    // Execute the query
-    const { data, error } = await query;
-    if (error) throw error;
-
-    // Format the results
-    const totalPages = Math.ceil((totalCount || 1) / limit);
-
-    return {
-      globalRankings: data || [],
-      total: totalCount || 0,
-      page,
-      totalPages,
-      hasMore: page < totalPages - 1,
-    };
+  if (sortBy === 'user_rating') {
+    list = await fetchSortByUserRating(limit, offset);
+  } else if (sortBy === 'global_rating') {
+    list = await fetchSortByGlobalRating(limit, offset);
+  } else if (sortBy === 'user_unknown') {
+    list = await fetchSortByUserDJUnknown(limit, offset);
   }
+
+  const totalPages = Math.ceil(list.length / limit);
+  const hasMore = page < totalPages;
+
+  return {
+    list,
+    total: list.length,
+    page,
+    totalPages,
+    hasMore,
+  };
 }
+
+async function fetchSortByGlobalRating(
+  limit: number,
+  offset: number
+): Promise<GlobalDJRankingDto[]> {
+  // Fetch global rankings with the DJ data
+  const { data, error, count } = await supabase
+    .from(EntityName.GLOBAL_RANKINGS)
+    .select('*, dj:dj_id(*)', { count: 'exact' })
+    .eq('dj.status', 'APPROVED')
+    .order('average_elo_rating', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) throw error;
+
+  const globalRatingsData: (GlobalRanking & { dj: DJ })[] = data;
+
+  return globalRatingsData.map((item, index) => ({
+    dj: item.dj,
+    average_elo_rating: item.average_elo_rating,
+    total_battles: item.total_battles,
+    last_updated: item.last_updated,
+    ranking: index + 1,
+  }));
+}
+
+async function fetchSortByUserRating(
+  limit: number,
+  offset: number
+): Promise<GlobalDJRankingDto[]> {
+  // Fetch user ratings with the DJ data
+  const { data, error, count } = await supabase
+    .from(EntityName.USER_DJ_RATINGS)
+    .select('*, dj:dj_id(*)', { count: 'exact' })
+    .eq('dj.status', 'APPROVED')
+    .or('unknown.is.null,unknown.eq.false')
+    .order('elo_rating', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) throw error;
+
+  const userRatingsData: (UserDJRating & { dj: DJ })[] = data;
+
+  return userRatingsData.map((item, index) => ({
+    dj: item.dj,
+    average_elo_rating: -1,
+    total_battles: -1,
+    last_updated: item.last_updated,
+    user_rating: item.elo_rating,
+    user_knows_this_dj: true,
+    user_ranking: index + 1,
+  }));
+}
+
+async function fetchSortByUserDJUnknown(
+  limit: number,
+  offset: number
+): Promise<GlobalDJRankingDto[]> {
+  // Fetch user ratings with the DJ data
+  const { data, error, count } = await supabase
+    .from(EntityName.USER_DJ_RATINGS)
+    .select('*, dj:dj_id(*)', { count: 'exact' })
+    .eq('dj.status', 'APPROVED')
+    .eq('unknown', true)
+    .order('dj(name)', { ascending: true })
+    .range(offset, offset + limit - 1);
+
+  if (error) throw error;
+
+  const userRatingsData: (UserDJRating & { dj: DJ })[] = data;
+
+  return userRatingsData.map((item, index) => ({
+    dj: item.dj,
+    average_elo_rating: -1,
+    total_battles: -1,
+    last_updated: item.last_updated,
+    user_rating: item.elo_rating,
+    user_knows_this_dj: false,
+  }));
+}
+
+// export async function fetchGlobalDJRankings(
+//   options: FetchGlobalDJRankingsOptions
+// ): Promise<GlobalDJRankingPaginatedResponse> {
+//   let result: DataResponse | undefined = undefined;
+
+//   if (options.sortBy === 'average_elo_rating_desc') {
+//     result = await getSortByGlobalRating(
+//       options.userId,
+//       (options.page - 1) * options.limit,
+//       options.limit,
+//       'DESC'
+//     );
+//   } else if (options.sortBy === 'average_elo_rating_asc') {
+//     result = await getSortByGlobalRating(
+//       options.userId,
+//       (options.page - 1) * options.limit,
+//       options.limit,
+//       'ASC'
+//     );
+//   } else if (options.sortBy === 'user_rating_desc') {
+//     result = await getSortByUserRating(
+//       options.userId,
+//       (options.page - 1) * options.limit,
+//       options.limit,
+//       'DESC'
+//     );
+//   } else if (options.sortBy === 'user_rating_asc') {
+//     result = await getSortByUserRating(
+//       options.userId,
+//       (options.page - 1) * options.limit,
+//       options.limit,
+//       'ASC'
+//     );
+//   }
+//   if (!result) throw new Error('Invalid sortBy option');
+
+//   const totalPages = Math.ceil(result.totalCount / options.limit);
+//   const hasMore = options.page < totalPages;
+
+//   return {
+//     globalRankings: result.data,
+//     total: result.totalCount,
+//     page: options.page,
+//     totalPages,
+//     hasMore,
+//   };
+// }
+
+// async function getSortByGlobalRating(
+//   userId: string,
+//   offset: number,
+//   limit: number,
+//   sortBy: 'ASC' | 'DESC'
+// ): Promise<DataResponse> {
+//   // Fetch global rankings with the DJ data
+//   const globalRatings = await supabase
+//     .from(EntityName.GLOBAL_RANKINGS)
+//     .select('*, dj:dj_id(*)', { count: 'exact' })
+//     .eq('dj.status', 'APPROVED')
+//     .order('average_elo_rating', { ascending: sortBy === 'ASC' })
+//     .range(offset, offset + limit - 1);
+
+//   if (globalRatings.error) throw globalRatings.error;
+
+//   // Type the return data of supabase query
+//   const globalRatingsData: (GlobalRanking & { dj: DJ })[] = globalRatings.data;
+
+//   // Get the list of all djs ids from data
+//   const djsIds = globalRatingsData.map((item) => item.dj.id);
+
+//   // Fetch the djs data from the user_dj_ratings table (get user's related ratings)
+//   const userRatings = await supabase
+//     .from(EntityName.USER_DJ_RATINGS)
+//     .select('*', { count: 'exact' })
+//     .eq('user_id', userId)
+//     .in('dj_id', djsIds);
+
+//   if (userRatings.error) throw userRatings.error;
+
+//   // Type the return data of supabase query
+//   const userRatingsData: UserDJRating[] = userRatings.data;
+
+//   // Merge the both list into data: GlobalDJRankingDto[]
+//   const mergedData: GlobalDJRankingDto[] = globalRatingsData.map(
+//     (item, index) => {
+//       const userRating = userRatingsData.find(
+//         (rating) => rating.dj_id === item.dj_id
+//       );
+
+//       return {
+//         dj: item.dj,
+//         average_elo_rating: item.average_elo_rating,
+//         total_battles: item.total_battles,
+//         last_updated: item.last_updated,
+//         user_rating: userRating ? userRating.elo_rating : undefined,
+//         user_knows_this_dj: userRating ? !userRating.unknown : undefined,
+//       };
+//     }
+//   );
+
+//   return {
+//     data: mergedData,
+//     totalCount: globalRatings.count || 0,
+//   };
+// }
+
+// async function getSortByUserRating(
+//   userId: string,
+//   offset: number,
+//   limit: number,
+//   sortBy: 'ASC' | 'DESC'
+// ): Promise<DataResponse> {
+//   // Fetch user ratings with the DJ data
+//   const userRatings = await supabase
+//     .from(EntityName.USER_DJ_RATINGS)
+//     .select(`*, dj:dj_id(*)`, { count: 'exact' })
+//     .eq(`dj.status`, 'APPROVED')
+//     .eq(`user_id`, userId)
+//     .order(`elo_rating`, { ascending: sortBy === 'ASC' })
+//     .range(offset, offset + limit - 1);
+
+//   if (userRatings.error) throw userRatings.error;
+
+//   // Type the return data of supabase query
+//   const userRatingsData: (UserDJRating & { dj: DJ })[] = userRatings.data;
+
+//   // Sort the user ratings by unknown last
+//   userRatingsData.sort((a, b) => {
+//     if (a.unknown && !b.unknown) return 1;
+//     if (!a.unknown && b.unknown) return -1;
+//     return 0;
+//   });
+
+//   // Get the list of all djs ids from data
+//   const djsIds = userRatingsData.map((item) => item.dj.id);
+
+//   // Get the global rankings for the djs ids
+//   const globalRatings = await supabase
+//     .from(EntityName.GLOBAL_RANKINGS)
+//     .select('*', { count: 'exact' })
+//     .in('dj_id', djsIds);
+
+//   if (globalRatings.error) throw globalRatings.error;
+
+//   // Type the return data of supabase query
+//   const globalRatingsData: GlobalRanking[] = globalRatings.data;
+
+//   // Merge the both list into data: GlobalDJRankingDto[]
+//   const mergedData: GlobalDJRankingDto[] = userRatingsData.map((item) => {
+//     const globalRanking = globalRatingsData.find(
+//       (ranking) => ranking.dj_id === item.dj_id
+//     );
+
+//     if (!globalRanking) throw new Error('Global ranking not found');
+
+//     return {
+//       dj: item.dj,
+//       average_elo_rating: globalRanking.average_elo_rating,
+//       total_battles: globalRanking.total_battles,
+//       last_updated: globalRanking.last_updated,
+//       user_rating: item.elo_rating,
+//       user_knows_this_dj: !item.unknown,
+//     };
+//   });
+
+//   return {
+//     data: mergedData,
+//     totalCount: userRatings.count || 0,
+//   };
+// }
+
+// interface DataResponse {
+//   data: GlobalDJRankingDto[];
+//   totalCount: number;
+// }

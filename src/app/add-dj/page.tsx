@@ -17,7 +17,11 @@ import { supabase } from '@/utils/supabase/client';
 import SubmitDJLayout from '@/components/SubmitDJLayout';
 import CreateDJNamePopover from '@/components/CreateDJNamePopover';
 import { sanitizeUrl, validateSocialMediaUrl } from '@/utils/url.utils';
-import { optimizeImage, validateImageDimensions } from '@/utils/image.utils';
+import {
+  OptimizedFile,
+  optimizeImage,
+  validateImageDimensions,
+} from '@/utils/image.utils';
 
 export default function Page() {
   const router = useRouter();
@@ -127,7 +131,7 @@ export default function Page() {
       }
 
       // Upload optimized photo to Supabase Storage
-      const extension = (optimizedImage as any).extension || 'webp';
+      const extension = (optimizedImage as OptimizedFile).extension || 'webp';
       const fileName = `${uuidv4()}.${extension}`;
       const filePath = `dj-photos/${fileName}`;
 
@@ -258,7 +262,7 @@ export default function Page() {
                 color="gray"
                 style={{ opacity: 0.8, width: '80%' }}
               >
-                Please add the DJ's main artist name.
+                {`Please add the DJ's main artist name.`}
               </Text>
             </Flex>
             <Flex direction="row" gap="2">
@@ -290,8 +294,8 @@ export default function Page() {
                 color="gray"
                 style={{ opacity: 0.8, width: '80%' }}
               >
-                Please add at least one DJ's social media URL. It will help us
-                identify which DJ you're talking about.
+                {`Please add at least one DJ's social media URL. It will help us
+                identify which DJ you're talking about.`}
               </Text>
             </Flex>
             <TextField.Root
