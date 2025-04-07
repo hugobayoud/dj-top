@@ -4,7 +4,7 @@ import {
   UserDJRating,
   GlobalRanking,
 } from '@/database/entities';
-import { supabase } from '@/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import { GlobalDJRankingDto } from '@/interfaces/dtos';
 
 export interface GlobalDJRankingPaginatedResponse {
@@ -55,6 +55,8 @@ async function fetchSortByGlobalRating(
   limit: number,
   offset: number
 ): Promise<GlobalDJRankingDto[]> {
+  const supabase = createClient();
+
   // Fetch global rankings with the DJ data
   const { data, error } = await supabase
     .from(EntityName.GLOBAL_RANKINGS)
@@ -80,6 +82,8 @@ async function fetchSortByUserRating(
   limit: number,
   offset: number
 ): Promise<GlobalDJRankingDto[]> {
+  const supabase = createClient();
+
   // Fetch user ratings with the DJ data
   const { data, error } = await supabase
     .from(EntityName.USER_DJ_RATINGS)
@@ -108,6 +112,8 @@ async function fetchSortByUserDJUnknown(
   limit: number,
   offset: number
 ): Promise<GlobalDJRankingDto[]> {
+  const supabase = createClient();
+
   // Fetch user ratings with the DJ data
   const { data, error } = await supabase
     .from(EntityName.USER_DJ_RATINGS)

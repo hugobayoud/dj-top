@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useRouter } from 'next/navigation';
 import { Button, Flex, Text, TextField, Box } from '@radix-ui/themes';
 
-import { supabase } from '@/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import SubmitDJLayout from '@/components/SubmitDJLayout';
 import CreateDJNamePopover from '@/components/CreateDJNamePopover';
 import { sanitizeUrl, validateSocialMediaUrl } from '@/utils/url.utils';
@@ -134,6 +134,8 @@ export default function Page() {
       const extension = (optimizedImage as OptimizedFile).extension || 'webp';
       const fileName = `${uuidv4()}.${extension}`;
       const filePath = `dj-photos/${fileName}`;
+
+      const supabase = createClient();
 
       const { error: uploadError } = await supabase.storage
         .from('dj-photos')

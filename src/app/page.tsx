@@ -7,10 +7,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { DJ } from '@/database/entities';
 import { getRandomDJs } from '@/utils/utils';
 import { useToast } from '@/components/Toast/Toast';
-import { supabase } from '@/utils/supabase/client';
 import HeroSection from '@/components/HeroSection';
 import { UserDJRatingDto } from '@/interfaces/dtos';
 import { BASE_ELO, K_FACTOR } from '@/constant/djs';
+import { createClient } from '@/utils/supabase/client';
 import LoadingScreen from '@/components/LoadingScreen';
 import DJBattleSection from '@/components/DJBattleSection';
 import DangerousSection from '@/components/DangerousSection';
@@ -27,6 +27,7 @@ export default function Page() {
     [UserDJRatingDto, UserDJRatingDto] | null
   >(null);
   const [unsavedData, setUnsavedData] = useState<boolean>(false);
+  const supabase = createClient();
 
   // Get toast function from context
   const { showToast } = useToast();

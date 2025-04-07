@@ -23,7 +23,7 @@ import {
 import { useState, useEffect } from 'react';
 
 import { DJ } from '@/database/entities';
-import { supabase } from '@/utils/supabase/client';
+import { createClient } from '@/utils/supabase/client';
 import ImageZoomDialog from '@/components/ImageZoomDialog';
 import RejectPendingDialog from '@/components/RejectPendingDialog';
 
@@ -33,6 +33,8 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [djs, setDjs] = useState<DJ[]>([]);
+
+  const supabase = createClient();
 
   useEffect(() => {
     // Check if already authenticated
